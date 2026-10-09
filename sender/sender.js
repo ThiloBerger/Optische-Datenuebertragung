@@ -400,9 +400,18 @@ class OpticalTransferSender {
         // Datenlänge prüfen und ggf. aufteilen
         const qrData = this.ensureQRDataFits(data);
         
+        // Canvas-Element erstellen
+        const canvas = document.createElement('canvas');
+        canvas.id = 'qr-canvas';
+        canvas.width = 400;
+        canvas.height = 400;
+        
+        // Canvas zum Container hinzufügen
+        this.qrCodeContainer.appendChild(canvas);
+        
         // QR-Code generieren
         QRCode.toCanvas(
-            this.qrCodeContainer,
+            canvas,
             qrData,
             {
                 width: 400,
@@ -416,7 +425,7 @@ class OpticalTransferSender {
             (error) => {
                 if (error) {
                     this.updateStatus('Fehler beim Generieren des QR-Codes: ' + error.message, 'error');
-                    this.qrCodeContainer.innerHTML = '<p style="color: red;">Fehler beim QR-Code: Daten zu groß</p>';
+                    this.qrCodeContainer.innerHTML = '<p style="color: red;">Fehler beim QR-Code: ' + error.message + '</p>';
                 }
             }
         );
@@ -433,7 +442,8 @@ class OpticalTransferSender {
         
         // Daten aufteilen - dies sollte nicht passieren, da createBlocks bereits die Größe begrenzt
         // Aber als Sicherheitsmaßnahme
-        this.updateStatus('Daten zu groß für QR-Code! Blockgröße wird weiter reduziert.', 'error');
+        this.updateStatus('Daten zu groß für QR-Code! Daten werden gekürzt.', 'error');
+        console.warn('QR-Code Daten zu groß! Datenlänge:', data.length, 'Max:', MAX_QR_LENGTH);
         return data.substring(0, MAX_QR_LENGTH);
     }
 
