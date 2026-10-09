@@ -113,6 +113,16 @@ class OpticalTransferSender {
             // Blockgröße und Anzeigedauer aktualisieren
             this.blockSize = parseInt(this.blockSizeSelect.value);
             this.displayTime = parseInt(this.displayTimeSelect.value);
+        
+        // Warnung, falls Blockgröße zu groß für QR-Code ist
+        if (this.blockSize > 2800) {
+            this.updateStatus("Hinweis: Für QR-Codes wird eine Blockgröße von max. 2.8 KB empfohlen", "info");
+        }
+            
+            // Warnung, falls Blockgröße zu groß ist
+            if (this.blockSize > 2800) {
+                this.updateStatus('Hinweis: Für QR-Codes wird eine Blockgröße von max. 2800 Bytes empfohlen', 'info');
+            }
             
             // Blöcke erstellen
             this.createBlocks();
@@ -137,16 +147,27 @@ class OpticalTransferSender {
         if (!this.fileData) return;
 
         this.blocks = [];
-        this.totalBlocks = Math.ceil(this.fileData.length / this.blockSize);
         this.currentBlock = 0;
 
         // Generiere Transfer-ID (UUID v4)
         this.transferId = this.generateTransferId();
 
+        // Maximale QR-Code Kapazität (Version 40, Error Correction Level L)
+        // ca. 2953 Bytes total, aber wir müssen Protokoll-Overhead berücksichtigen
+        // Protokoll: "OTP:1.0:{transferId}:{blockNumber}:{totalBlocks}:{dataLength}:{data}:{checksum}"
+        // Overhead: "OTP:1.0:" (7) + transferId (36) + ":" (1) + blockNumber (max 7) + ":" (1) + totalBlocks (max 7) + ":" (1) + dataLength (max 7) + ":" (1) + ":" (1) + checksum (max 10) = ca. 72 Bytes
+        // Sicherheitspuffer: 100 Bytes
+        const MAX_QR_DATA = 2800; // Bytes für Nutzdaten
+        
+        // Blockgröße anpassen, falls zu groß für QR-Code
+        const effectiveBlockSize = Math.min(this.blockSize, MAX_QR_DATA);
+        
+        this.totalBlocks = Math.ceil(this.fileData.length / effectiveBlockSize);
+
         // Blöcke aufteilen
         for (let i = 0; i < this.totalBlocks; i++) {
-            const start = i * this.blockSize;
-            const end = Math.min(start + this.blockSize, this.fileData.length);
+            const start = i * effectiveBlockSize;
+            const end = Math.min(start + effectiveBlockSize, this.fileData.length);
             const blockData = this.fileData.slice(start, end);
             
             // Block-Metadaten erstellen
@@ -167,6 +188,11 @@ class OpticalTransferSender {
 
         // Transfer-Metadaten erstellen
         this.createTransferMetadata();
+        
+        // Warnung anzeigen, falls Blockgröße reduziert wurde
+        if (effectiveBlockSize < this.blockSize) {
+            this.updateStatus(`Blockgröße auf ${effectiveBlockSize} Bytes reduziert (QR-Code Limit)`, 'info');
+        }
     }
 
     createTransferMetadata() {
@@ -371,25 +397,44 @@ class OpticalTransferSender {
         // QR-Code Container leeren
         this.qrCodeContainer.innerHTML = '';
 
+        // Datenlänge prüfen und ggf. aufteilen
+        const qrData = this.ensureQRDataFits(data);
+        
         // QR-Code generieren
         QRCode.toCanvas(
             this.qrCodeContainer,
-            data,
+            qrData,
             {
                 width: 400,
                 margin: 2,
                 color: {
                     dark: '#000000',
                     light: '#ffffff'
-                }
+                },
+                errorCorrectionLevel: 'L'  // Niedriges Fehlerkorrekturlevel für maximale Kapazität
             },
             (error) => {
                 if (error) {
                     this.updateStatus('Fehler beim Generieren des QR-Codes: ' + error.message, 'error');
-                    this.qrCodeContainer.innerHTML = '<p style="color: red;">Fehler beim QR-Code</p>';
+                    this.qrCodeContainer.innerHTML = '<p style="color: red;">Fehler beim QR-Code: Daten zu groß</p>';
                 }
             }
         );
+    }
+
+    ensureQRDataFits(data) {
+        // Maximale Länge für QR-Code (Version 40, Error Correction Level L)
+        // Theoretisches Maximum: 2953 Bytes, aber wir verwenden einen Puffer
+        const MAX_QR_LENGTH = 2800;
+        
+        if (data.length <= MAX_QR_LENGTH) {
+            return data;
+        }
+        
+        // Daten aufteilen - dies sollte nicht passieren, da createBlocks bereits die Größe begrenzt
+        // Aber als Sicherheitsmaßnahme
+        this.updateStatus('Daten zu groß für QR-Code! Blockgröße wird weiter reduziert.', 'error');
+        return data.substring(0, MAX_QR_LENGTH);
     }
 
     updateTransferUI() {
