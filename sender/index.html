@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optical Data Transfer - Sender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: white;
+            border: 2px solid #333;
+            border-radius: 5px;
+        }
+        .qr-code img {
+            max-width: 100%;
+            height: auto;
+        }
+        .progress {
+            height: 30px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            background-color: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.error {
+            background-color: #ffebee;
+            border-left-color: #f44336;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .info-item {
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .info-item .label {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+        }
+        .info-item .value {
+            font-size: 14px;
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        select, input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .file-input {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Optical Data Transfer - Sender</h1>
+    
+    <div class="container">
+        <!-- Dateiauswahl -->
+        <div class="section">
+            <h2>1. Datei auswählen</h2>
+            <div class="file-input">
+                <input type="file" id="fileInput" multiple>
+            </div>
+            <div class="controls">
+                <button id="zipButton" disabled>Als ZIP bündeln</button>
+                <button id="startButton" disabled>Übertragung starten</button>
+                <button id="stopButton" disabled>Stop</button>
+            </div>
+        </div>
+
+        <!-- Transfer-Einstellungen -->
+        <div class="section">
+            <h2>2. Übertragungseinstellungen</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">Anzeigedauer pro Block:</div>
+                    <div class="value">
+                        <select id="displayTime">
+                            <option value="500">0.5 Sekunden</option>
+                            <option value="1000" selected>1 Sekunde</option>
+                            <option value="1500">1.5 Sekunden</option>
+                            <option value="2000">2 Sekunden</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Blockgröße:</div>
+                    <div class="value">
+                        <select id="blockSize">
+                            <option value="1024">1 KB</option>
+                            <option value="2048">2 KB</option>
+                            <option value="4096" selected>4 KB</option>
+                            <option value="8192">8 KB</option>
+                            <option value="16384">16 KB</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transfer-Informationen -->
+        <div class="section">
+            <h2>3. Transfer-Informationen</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">Transfer-ID:</div>
+                    <div class="value" id="transferId">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Dateigröße:</div>
+                    <div class="value" id="fileSize">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Anzahl Blöcke:</div>
+                    <div class="value" id="totalBlocks">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Aktueller Block:</div>
+                    <div class="value" id="currentBlock">-</div>
+                </div>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+        </div>
+
+        <!-- QR-Code Anzeige -->
+        <div class="section">
+            <h2>4. QR-Code Anzeige</h2>
+            <div class="qr-code" id="qrCodeContainer">
+                <p>QR-Code wird hier angezeigt...</p>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="section">
+            <h2>5. Status</h2>
+            <div class="status" id="statusMessage">
+                Bereit für neue Übertragung
+            </div>
+        </div>
+
+        <!-- Manuelle Blockauswahl -->
+        <div class="section">
+            <h2>6. Manuelle Blockauswahl</h2>
+            <div class="controls">
+                <input type="number" id="blockNumberInput" placeholder="Blocknummer" min="1">
+                <button id="showBlockButton" disabled>Block anzeigen</button>
+                <button id="exportMetadataButton" disabled>Metadaten exportieren</button>
+            </div>
+            <textarea id="metadataOutput" readonly placeholder="Metadaten werden hier angezeigt..."></textarea>
+        </div>
+    </div>
+
+    <!-- QR-Code Bibliothek -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="sender.js"></script>
+</body>
+</html>

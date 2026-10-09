@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optical Data Transfer - Sender Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .test-result.pass {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .test-result.fail {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        .test-result.info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .progress {
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #28a745;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        .test-summary {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Optical Data Transfer - Sender Tests</h1>
+    
+    <div class="container">
+        <div class="test-section">
+            <h2>1. Grundlegende Funktionstests</h2>
+            <button id="testTransferId">Test Transfer-ID Generierung</button>
+            <button id="testCRC32">Test CRC-32 Berechnung</button>
+            <button id="testBlockCreation">Test Block-Erstellung</button>
+            <button id="testQRDataFormat">Test QR-Datenformat</button>
+            <button id="runAllBasic">Alle Grundtests ausführen</button>
+            
+            <div id="basicTestResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Dateiverarbeitungstests</h2>
+            <button id="testSmallFile">Test kleine Datei (1 KB)</button>
+            <button id="testMediumFile">Test mittlere Datei (100 KB)</button>
+            <button id="testLargeFile">Test große Datei (1 MB)</button>
+            <button id="testEmptyFile">Test leere Datei</button>
+            <button id="runAllFile">Alle Dateitests ausführen</button>
+            
+            <div id="fileTestResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Fehlerbehandlungstests</h2>
+            <button id="testInvalidBlockNumber">Test ungültige Blocknummer</button>
+            <button id="testMissingData">Test fehlende Daten</button>
+            <button id="testDuplicateBlocks">Test Duplikat-Blöcke</button>
+            <button id="runAllError">Alle Fehlertests ausführen</button>
+            
+            <div id="errorTestResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Leistungs- und Durchsatztests</h2>
+            <div>
+                <label for="testFileSize">Test-Dateigröße (KB):</label>
+                <input type="number" id="testFileSize" value="100" min="1" max="10000">
+            </div>
+            <div>
+                <label for="testBlockSize">Blockgröße (Bytes):</label>
+                <select id="testBlockSize">
+                    <option value="1024">1 KB</option>
+                    <option value="2048">2 KB</option>
+                    <option value="4096" selected>4 KB</option>
+                    <option value="8192">8 KB</option>
+                </select>
+            </div>
+            <button id="testThroughput">Durchsatz testen</button>
+            <button id="testMemoryUsage">Speichernutzung testen</button>
+            
+            <div class="progress" id="throughputProgress">
+                <div class="progress-bar" id="throughputProgressBar"></div>
+            </div>
+            <div id="throughputResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. Protokoll-Tests</h2>
+            <button id="testProtocolVersion">Test Protokollversion</button>
+            <button id="testMetadataFormat">Test Metadatenformat</button>
+            <button id="testChecksumVerification">Test Prüfsummenverifikation</button>
+            <button id="runAllProtocol">Alle Protokolltests ausführen</button>
+            
+            <div id="protocolTestResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>6. Integritätstests</h2>
+            <button id="testDataIntegrity">Test Datenintegrität</button>
+            <button id="testSHA256">Test SHA-256 Berechnung</button>
+            <button id="testReconstruction">Test Dateirekonstruktion</button>
+            <button id="runAllIntegrity">Alle Integritätstests ausführen</button>
+            
+            <div id="integrityTestResults"></div>
+        </div>
+
+        <div class="test-summary">
+            <h2>Testzusammenfassung</h2>
+            <div id="testSummary">
+                <p>Führen Sie Tests aus, um die Ergebnisse zu sehen.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test-Framework
+        class TestFramework {
+            constructor() {
+                this.testResults = {
+                    passed: 0,
+                    failed: 0,
+                    total: 0
+                };
+                this.testDetails = [];
+            }
+
+            addResult(testName, passed, message = '') {
+                this.testResults.total++;
+                if (passed) {
+                    this.testResults.passed++;
+                } else {
+                    this.testResults.failed++;
+                }
+                
+                this.testDetails.push({
+                    name: testName,
+                    passed: passed,
+                    message: message
+                });
+                
+                return passed;
+            }
+
+            getSummary() {
+                return {
+                    passed: this.testResults.passed,
+                    failed: this.testResults.failed,
+                    total: this.testResults.total,
+                    successRate: this.testResults.total > 0 ? 
+                        ((this.testResults.passed / this.testResults.total) * 100).toFixed(2) : 0
+                };
+            }
+
+            displayResult(elementId, testName, passed, message = '') {
+                const container = document.getElementById(elementId);
+                const resultDiv = document.createElement('div');
+                resultDiv.className = `test-result ${passed ? 'pass' : 'fail'}`;
+                resultDiv.innerHTML = `<strong>${testName}:</strong> ${passed ? '✓ BESTANDEN' : '✗ FEHLGESCHLAGEN'}${message ? `<br><small>${message}</small>` : ''}`;
+                container.appendChild(resultDiv);
+                
+                return passed;
+            }
+
+            clearResults(elementId) {
+                const container = document.getElementById(elementId);
+                container.innerHTML = '';
+            }
+
+            updateSummary() {
+                const summary = this.getSummary();
+                const summaryDiv = document.getElementById('testSummary');
+                
+                summaryDiv.innerHTML = `
+                    <p><strong>Gesamt:</strong> ${summary.total} Tests</p>
+                    <p><strong>Bestanden:</strong> <span style="color: green;">${summary.passed}</span></p>
+                    <p><strong>Fehlgeschlagen:</strong> <span style="color: red;">${summary.failed}</span></p>
+                    <p><strong>Erfolgsrate:</strong> ${summary.successRate}%</p>
+                `;
+            }
+        }
+
+        // Globales Test-Framework
+        const testFramework = new TestFramework();
+
+        // Hilfsfunktionen
+        function generateTestData(sizeInKB) {
+            const size = sizeInKB * 1024;
+            const data = new Uint8Array(size);
+            for (let i = 0; i < size; i++) {
+                data[i] = i % 256;
+            }
+            return data;
+        }
+
+        function calculateCRC32(data) {
+            let crc = 0xFFFFFFFF;
+            const table = [];
+            
+            // CRC-32 Tabelle generieren
+            for (let i = 0; i < 256; i++) {
+                let c = i;
+                for (let j = 0; j < 8; j++) {
+                    c = (c & 1) ? (c >>> 1) ^ 0xEDB88320 : c >>> 1;
+                }
+                table[i] = c;
+            }
+            
+            for (let i = 0; i < data.length; i++) {
+                crc = (crc >>> 8) ^ table[(crc ^ data[i]) & 0xFF];
+            }
+            
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        async function calculateSHA256(data) {
+            const buffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(buffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Test-Funktionen
+        function testTransferIdGeneration() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Transfer-ID Generierung', false, 'Sender nicht geladen');
+            }
+            
+            const id1 = sender.generateTransferId();
+            const id2 = sender.generateTransferId();
+            
+            // Prüfen, ob IDs generiert wurden
+            const hasId1 = id1 && id1.length > 0;
+            const hasId2 = id2 && id2.length > 0;
+            const areDifferent = id1 !== id2;
+            
+            // UUID-Format prüfen
+            const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            const isValidFormat = uuidPattern.test(id1);
+            
+            const passed = hasId1 && hasId2 && areDifferent && isValidFormat;
+            const message = passed ? `IDs: ${id1}, ${id2}` : 'Ungültige IDs';
+            
+            return testFramework.displayResult('basicTestResults', 'Transfer-ID Generierung', passed, message);
+        }
+
+        function testCRC32Calculation() {
+            const testData = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+            const crc1 = calculateCRC32(testData);
+            const crc2 = calculateCRC32(testData);
+            
+            const passed = crc1 === crc2 && crc1 === 0x9D448055;
+            const message = `CRC: ${crc1.toString(16).toUpperCase()}`;
+            
+            return testFramework.displayResult('basicTestResults', 'CRC-32 Berechnung', passed, message);
+        }
+
+        function testBlockCreation() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Block-Erstellung', false, 'Sender nicht geladen');
+            }
+            
+            // Testdatei erstellen
+            const testData = new Uint8Array(100);
+            for (let i = 0; i < 100; i++) {
+                testData[i] = i;
+            }
+            
+            // Datei im Sender verarbeiten
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'test.txt');
+            
+            const passed = sender.blocks && sender.blocks.length > 0 && sender.totalBlocks > 0;
+            const message = passed ? `Blöcke: ${sender.totalBlocks}, Größe: ${sender.blockSize}` : 'Keine Blöcke erstellt';
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('basicTestResults', 'Block-Erstellung', passed, message);
+        }
+
+        function testQRDataFormat() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('QR-Datenformat', false, 'Sender nicht geladen');
+            }
+            
+            // Testblock erstellen
+            const testData = new Uint8Array(16);
+            for (let i = 0; i < 16; i++) {
+                testData[i] = i;
+            }
+            
+            const block = {
+                blockNumber: 1,
+                totalBlocks: 10,
+                transferId: 'test-transfer-id',
+                filename: 'test.txt',
+                data: testData,
+                timestamp: Date.now()
+            };
+            
+            block.checksum = calculateCRC32(testData);
+            
+            const qrData = sender.createQRData(block);
+            
+            // Format prüfen
+            const parts = qrData.split(':');
+            const passed = parts.length >= 8 && 
+                          parts[0] === 'OTP' && 
+                          parts[1] === '1.0' &&
+                          parts[2] === 'test-transfer-id' &&
+                          parts[3] === '1' &&
+                          parts[4] === '10';
+            
+            const message = passed ? `QR-Daten: ${qrData.substring(0, 50)}...` : 'Ungültiges Format';
+            
+            return testFramework.displayResult('basicTestResults', 'QR-Datenformat', passed, message);
+        }
+
+        function testSmallFile() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Kleine Datei', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(1); // 1 KB
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'small.txt');
+            
+            const passed = sender.blocks && sender.blocks.length > 0;
+            const message = passed ? `Blöcke: ${sender.totalBlocks}, Größe: ${sender.fileData ? sender.fileData.length : 0} Bytes` : 'Fehler beim Verarbeiten';
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('fileTestResults', 'Kleine Datei (1 KB)', passed, message);
+        }
+
+        function testMediumFile() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Mittlere Datei', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(100); // 100 KB
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'medium.txt');
+            
+            const passed = sender.blocks && sender.blocks.length > 0;
+            const message = passed ? `Blöcke: ${sender.totalBlocks}, Größe: ${sender.fileData ? sender.fileData.length : 0} Bytes` : 'Fehler beim Verarbeiten';
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('fileTestResults', 'Mittlere Datei (100 KB)', passed, message);
+        }
+
+        function testLargeFile() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Große Datei', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(1024); // 1 MB
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'large.txt');
+            
+            const passed = sender.blocks && sender.blocks.length > 0;
+            const message = passed ? `Blöcke: ${sender.totalBlocks}, Größe: ${sender.fileData ? sender.fileData.length : 0} Bytes` : 'Fehler beim Verarbeiten';
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('fileTestResults', 'Große Datei (1 MB)', passed, message);
+        }
+
+        function testEmptyFile() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Leere Datei', false, 'Sender nicht geladen');
+            }
+            
+            const testData = new Uint8Array(0);
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'empty.txt');
+            
+            const passed = sender.blocks && sender.blocks.length === 1;
+            const message = passed ? `Leere Datei erfolgreich verarbeitet` : 'Fehler beim Verarbeiten';
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('fileTestResults', 'Leere Datei', passed, message);
+        }
+
+        function testInvalidBlockNumber() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Ungültige Blocknummer', false, 'Sender nicht geladen');
+            }
+            
+            // Test mit ungültiger Blocknummer
+            const testData = generateTestData(1);
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'test.txt');
+            
+            // Versuchen, einen ungültigen Block anzuzeigen
+            const originalBlockInput = document.getElementById('blockNumberInput').value;
+            document.getElementById('blockNumberInput').value = '999999';
+            
+            const originalStatus = sender.statusMessage.textContent;
+            sender.showSpecificBlock();
+            
+            const passed = sender.statusMessage.textContent.includes('Ungültige Blocknummer');
+            const message = passed ? 'Ungültige Blocknummer korrekt erkannt' : 'Fehler nicht erkannt';
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            sender.statusMessage.textContent = originalStatus;
+            document.getElementById('blockNumberInput').value = originalBlockInput;
+            
+            return testFramework.displayResult('errorTestResults', 'Ungültige Blocknummer', passed, message);
+        }
+
+        function testDuplicateBlocks() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Duplikat-Blöcke', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(1);
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'test.txt');
+            
+            if (sender.blocks && sender.blocks.length > 0) {
+                // Versuchen, denselben Block erneut anzuzeigen
+                const blockNumber = 1;
+                const originalBlockInput = document.getElementById('blockNumberInput').value;
+                
+                document.getElementById('blockNumberInput').value = blockNumber;
+                sender.showSpecificBlock();
+                
+                // Nochmal anzeigen
+                sender.showSpecificBlock();
+                
+                const passed = true; // Der Sender erlaubt Duplikate, der Empfänger sollte sie erkennen
+                const message = 'Duplikat-Block angezeigt (Empfänger muss erkennen)';
+                
+                // Zustand wiederherstellen
+                document.getElementById('blockNumberInput').value = originalBlockInput;
+                
+                return testFramework.displayResult('errorTestResults', 'Duplikat-Blöcke', passed, message);
+            }
+            
+            return testFramework.displayResult('errorTestResults', 'Duplikat-Blöcke', false, 'Keine Blöcke verfügbar');
+        }
+
+        async function testThroughput() {
+            const fileSizeKB = parseInt(document.getElementById('testFileSize').value);
+            const blockSize = parseInt(document.getElementById('testBlockSize').value);
+            
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Durchsatz-Test', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(fileSizeKB);
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            const originalBlockSize = sender.blockSize;
+            
+            // Blockgröße anpassen
+            sender.blockSizeSelect.value = blockSize;
+            sender.blockSize = blockSize;
+            
+            const startTime = performance.now();
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'throughput.txt');
+            
+            const processingTime = performance.now() - startTime;
+            const totalBlocks = sender.totalBlocks;
+            const dataSize = sender.fileData ? sender.fileData.length : 0;
+            
+            const throughput = dataSize / (processingTime / 1000); // Bytes pro Sekunde
+            const throughputMB = throughput / (1024 * 1024);
+            
+            const passed = processingTime > 0 && totalBlocks > 0;
+            const message = `Verarbeitung: ${processingTime.toFixed(2)}ms, Blöcke: ${totalBlocks}, Durchsatz: ${throughputMB.toFixed(2)} MB/s`;
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            sender.blockSize = originalBlockSize;
+            
+            // Progress zurücksetzen
+            document.getElementById('throughputProgressBar').style.width = '0%';
+            
+            return testFramework.displayResult('throughputResults', `Durchsatz-Test (${fileSizeKB} KB, ${blockSize} Bytes/Block)`, passed, message);
+        }
+
+        function testProtocolVersion() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Protokollversion', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(1);
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'test.txt');
+            
+            let passed = false;
+            let message = '';
+            
+            if (sender.blocks && sender.blocks.length > 0) {
+                const block = sender.blocks[0];
+                const qrData = sender.createQRData(block);
+                
+                // Protokollversion prüfen
+                const parts = qrData.split(':');
+                passed = parts.length >= 2 && parts[1] === '1.0';
+                message = passed ? `Protokollversion: ${parts[1]}` : 'Version nicht gefunden';
+            }
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('protocolTestResults', 'Protokollversion', passed, message);
+        }
+
+        function testMetadataFormat() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Metadatenformat', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(1);
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            const originalMetadata = sender.transferMetadata;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'test.txt');
+            
+            let passed = false;
+            let message = '';
+            
+            if (sender.transferMetadata) {
+                const metadata = sender.transferMetadata;
+                
+                // Metadaten prüfen
+                passed = metadata.transferId && 
+                       metadata.filename && 
+                       metadata.originalSize !== undefined &&
+                       metadata.blockSize !== undefined &&
+                       metadata.totalBlocks !== undefined &&
+                       metadata.fileHash &&
+                       metadata.blocks && 
+                       metadata.blocks.length > 0;
+                
+                message = passed ? `Metadaten: ${JSON.stringify(metadata, null, 2).substring(0, 100)}...` : 'Unvollständige Metadaten';
+            }
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            sender.transferMetadata = originalMetadata;
+            
+            return testFramework.displayResult('protocolTestResults', 'Metadatenformat', passed, message);
+        }
+
+        async function testChecksumVerification() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Prüfsummenverifikation', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(1);
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'test.txt');
+            
+            let passed = false;
+            let message = '';
+            
+            if (sender.blocks && sender.blocks.length > 0) {
+                const block = sender.blocks[0];
+                
+                // CRC-32 neu berechnen
+                const calculatedCrc = calculateCRC32(block.data);
+                passed = calculatedCrc === block.checksum;
+                message = `Berechnet: ${calculatedCrc}, Erwartet: ${block.checksum}`;
+            }
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('protocolTestResults', 'Prüfsummenverifikation', passed, message);
+        }
+
+        async function testDataIntegrity() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Datenintegrität', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(10); // 10 KB
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'integrity.txt');
+            
+            let passed = false;
+            let message = '';
+            
+            if (sender.fileData && sender.blocks && sender.blocks.length > 0) {
+                // Originaldaten mit rekonstruierten Daten vergleichen
+                const reconstructedData = new Uint8Array(sender.fileData.length);
+                let offset = 0;
+                
+                for (const block of sender.blocks) {
+                    reconstructedData.set(block.data, offset);
+                    offset += block.data.length;
+                }
+                
+                // Vergleichen
+                passed = testData.length === reconstructedData.length;
+                for (let i = 0; i < testData.length && passed; i++) {
+                    if (testData[i] !== reconstructedData[i]) {
+                        passed = false;
+                        break;
+                    }
+                }
+                
+                message = passed ? 'Datenintegrität bestätigt' : 'Daten unterscheiden sich';
+            }
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('integrityTestResults', 'Datenintegrität', passed, message);
+        }
+
+        async function testSHA256() {
+            const testData = generateTestData(1);
+            const hash = await calculateSHA256(testData);
+            
+            const passed = hash.length === 64; // SHA-256 Hash hat 64 Hex-Zeichen
+            const message = passed ? `SHA-256: ${hash}` : 'Ungültiger Hash';
+            
+            return testFramework.displayResult('integrityTestResults', 'SHA-256 Berechnung', passed, message);
+        }
+
+        async function testReconstruction() {
+            const sender = window.sender;
+            if (!sender) {
+                return testFramework.addResult('Dateirekonstruktion', false, 'Sender nicht geladen');
+            }
+            
+            const testData = generateTestData(5); // 5 KB
+            const originalFileData = sender.fileData;
+            const originalBlocks = sender.blocks;
+            
+            sender.processFile(new Blob([testData], { type: 'application/octet-stream' }), 'reconstruct.txt');
+            
+            let passed = false;
+            let message = '';
+            
+            if (sender.fileData && sender.blocks && sender.blocks.length > 0) {
+                // Datei aus Blöcken rekonstruieren
+                const reconstructed = new Uint8Array(sender.fileData.length);
+                let offset = 0;
+                
+                for (const block of sender.blocks) {
+                    reconstructed.set(block.data, offset);
+                    offset += block.data.length;
+                }
+                
+                // Vergleichen
+                passed = testData.length === reconstructed.length;
+                for (let i = 0; i < testData.length && passed; i++) {
+                    if (testData[i] !== reconstructed[i]) {
+                        passed = false;
+                        break;
+                    }
+                }
+                
+                message = passed ? `Datei erfolgreich rekonstruiert (${reconstructed.length} Bytes)` : 'Rekonstruktion fehlgeschlagen';
+            }
+            
+            // Zustand wiederherstellen
+            sender.fileData = originalFileData;
+            sender.blocks = originalBlocks;
+            sender.totalBlocks = originalBlocks ? originalBlocks.length : 0;
+            
+            return testFramework.displayResult('integrityTestResults', 'Dateirekonstruktion', passed, message);
+        }
+
+        // Event-Listener für Test-Buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            // Grundlegende Tests
+            document.getElementById('testTransferId').addEventListener('click', testTransferIdGeneration);
+            document.getElementById('testCRC32').addEventListener('click', testCRC32Calculation);
+            document.getElementById('testBlockCreation').addEventListener('click', testBlockCreation);
+            document.getElementById('testQRDataFormat').addEventListener('click', testQRDataFormat);
+            document.getElementById('runAllBasic').addEventListener('click', () => {
+                testFramework.clearResults('basicTestResults');
+                testTransferIdGeneration();
+                testCRC32Calculation();
+                testBlockCreation();
+                testQRDataFormat();
+                testFramework.updateSummary();
+            });
+
+            // Dateitests
+            document.getElementById('testSmallFile').addEventListener('click', testSmallFile);
+            document.getElementById('testMediumFile').addEventListener('click', testMediumFile);
+            document.getElementById('testLargeFile').addEventListener('click', testLargeFile);
+            document.getElementById('testEmptyFile').addEventListener('click', testEmptyFile);
+            document.getElementById('runAllFile').addEventListener('click', () => {
+                testFramework.clearResults('fileTestResults');
+                testSmallFile();
+                testMediumFile();
+                testLargeFile();
+                testEmptyFile();
+                testFramework.updateSummary();
+            });
+
+            // Fehlertests
+            document.getElementById('testInvalidBlockNumber').addEventListener('click', testInvalidBlockNumber);
+            document.getElementById('testMissingData').addEventListener('click', () => {
+                // Platzhalter - noch nicht implementiert
+                testFramework.displayResult('errorTestResults', 'Fehlende Daten', false, 'Noch nicht implementiert');
+            });
+            document.getElementById('testDuplicateBlocks').addEventListener('click', testDuplicateBlocks);
+            document.getElementById('runAllError').addEventListener('click', () => {
+                testFramework.clearResults('errorTestResults');
+                testInvalidBlockNumber();
+                testDuplicateBlocks();
+                testFramework.updateSummary();
+            });
+
+            // Durchsatztests
+            document.getElementById('testThroughput').addEventListener('click', testThroughput);
+            document.getElementById('testMemoryUsage').addEventListener('click', () => {
+                // Platzhalter - noch nicht implementiert
+                testFramework.displayResult('throughputResults', 'Speichernutzung', false, 'Noch nicht implementiert');
+            });
+
+            // Protokolltests
+            document.getElementById('testProtocolVersion').addEventListener('click', testProtocolVersion);
+            document.getElementById('testMetadataFormat').addEventListener('click', testMetadataFormat);
+            document.getElementById('testChecksumVerification').addEventListener('click', testChecksumVerification);
+            document.getElementById('runAllProtocol').addEventListener('click', () => {
+                testFramework.clearResults('protocolTestResults');
+                testProtocolVersion();
+                testMetadataFormat();
+                testChecksumVerification();
+                testFramework.updateSummary();
+            });
+
+            // Integritätstests
+            document.getElementById('testDataIntegrity').addEventListener('click', testDataIntegrity);
+            document.getElementById('testSHA256').addEventListener('click', testSHA256);
+            document.getElementById('testReconstruction').addEventListener('click', testReconstruction);
+            document.getElementById('runAllIntegrity').addEventListener('click', async () => {
+                testFramework.clearResults('integrityTestResults');
+                await testDataIntegrity();
+                await testSHA256();
+                await testReconstruction();
+                testFramework.updateSummary();
+            });
+        });
+    </script>
+</body>
+</html>

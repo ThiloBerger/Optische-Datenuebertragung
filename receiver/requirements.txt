@@ -1,0 +1,40 @@
+# Optische Datenübertragung - Python-Empfänger Abhängigkeiten
+# Windows 11 kompatibel
+
+# Bildschirmerfassung
+mss>=9.0.0
+
+# Bildverarbeitung und QR-Code Erkennung
+opencv-python>=4.8.0.76
+opencv-python-headless>=4.8.0.76
+pyzbar>=0.1.9
+
+# Optional: Alternative QR-Code Bibliothek
+# qrcode>=7.4.2
+
+# Für ZIP-Datei-Verarbeitung
+PyYAML>=6.0.1
+
+# Für Fortschrittsbalken und CLI
+rich>=13.7.0
+
+# Für CRC-Prüfsummen
+crc32c>=2.2
+
+# Für SHA-256 und andere Hash-Funktionen
+# (in Python Standardbibliothek enthalten: hashlib)
+
+# Für Dateisystem-Operationen
+# (in Python Standardbibliothek enthalten: pathlib, os, shutil)
+
+# Für JSON-Verarbeitung
+# (in Python Standardbibliothek enthalten: json)
+
+# Für Zeitmessung und Verzögerungen
+# (in Python Standardbibliothek enthalten: time)
+
+# Für Argument-Parsing
+# (in Python Standardbibliothek enthalten: argparse)
+
+# Für Logging
+# (in Python Standardbibliothek enthalten: logging)
